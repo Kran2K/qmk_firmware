@@ -79,16 +79,22 @@ typedef struct {
     bool key_sent;
 } async_key_t;
 
-async_key_t async = {0};
+async_key_t ws_async = {0};
+async_key_t ad_async = {0};
 
 bool w_down = false;
 bool s_down = false;
-
 bool user_override_w = false;
 bool user_override_s = false;
-
 uint16_t w_pressed_time = 0;
 uint16_t s_pressed_time = 0;
+
+bool a_down = false;
+bool d_down = false;
+bool user_override_a = false;
+bool user_override_d = false;
+uint16_t a_pressed_time = 0;
+uint16_t d_pressed_time = 0;
 
 bool is_mid_air = false;
 uint16_t mid_air_start_time = 0;
@@ -99,8 +105,31 @@ float getCounterStrafeHoldTime(float ms) {
     return -0.00034f * ms * ms + 0.355f * ms + 25.5f;
 }
 
+float getCounterStrafeHoldTimeAD(float ms) {
+    if (ms < 150.0f) return 0.0f;
+    if (ms > 560.0f) return 115.0f;
+    return -0.00034f * ms * ms + 0.355f * ms + 25.5f;
+}
+
 bool is_lalt_pressed(void) {
     return get_mods() & MOD_BIT(KC_LALT);
+}
+
+void trigger_counter_strafe(uint16_t held_key, uint16_t held_time, bool is_ws_axis) {
+    uint16_t counter_key = (held_key == KC_W) ? KC_S : 
+                          (held_key == KC_S) ? KC_W :
+                          (held_key == KC_A) ? KC_D : KC_A;
+    
+    uint16_t press_duration = is_ws_axis ? getCounterStrafeHoldTime(held_time) : 
+                                          getCounterStrafeHoldTimeAD(held_time);
+    
+    async_key_t *target_async = is_ws_axis ? &ws_async : &ad_async;
+    
+    target_async->active = true;
+    target_async->start_time = timer_read();
+    target_async->duration = press_duration;
+    target_async->keycode = counter_key;
+    target_async->key_sent = false;
 }
 
 bool process_record_user(uint16_t keycode, keyrecord_t *record) {
@@ -120,52 +149,80 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
     if (keycode == KC_W) {
         if (record->event.pressed) {
             user_override_w = true;
+            w_pressed_time = timer_read();
+            w_down = true;
         } else {
             user_override_w = false;
+            w_down = false;
+            if (s_down) {
+                s_pressed_time = timer_read();
+            }
+            
+            // 키를 뗄 때 카운터 스트레이프 로직
+            if (!is_lalt_pressed() && !is_mid_air && !s_down) {
+                uint16_t held_time = timer_elapsed(w_pressed_time);
+                trigger_counter_strafe(KC_W, held_time, true);
+            }
         }
     }
+    
     if (keycode == KC_S) {
         if (record->event.pressed) {
             user_override_s = true;
+            s_pressed_time = timer_read();
+            s_down = true;
         } else {
             user_override_s = false;
+            s_down = false;
+            if (w_down) {
+                w_pressed_time = timer_read();
+            }
+            
+            // 키를 뗄 때 카운터 스트레이프 로직
+            if (!is_lalt_pressed() && !is_mid_air && !w_down) {
+                uint16_t held_time = timer_elapsed(s_pressed_time);
+                trigger_counter_strafe(KC_S, held_time, true);
+            }
         }
     }
 
-    if (keycode == KC_W || keycode == KC_S) {
-        bool is_w = keycode == KC_W;
-        bool is_pressed = record->event.pressed;
-
-        if (is_pressed) {
-            if (is_w) {
-                w_pressed_time = timer_read();
-                w_down = true;
-            } else {
-                s_pressed_time = timer_read();
-                s_down = true;
-            }
+    if (keycode == KC_A) {
+        if (record->event.pressed) {
+            user_override_a = true;
+            a_pressed_time = timer_read();
+            a_down = true;
         } else {
-            if (is_w) {
-                w_down = false;
-            } else {
-                s_down = false;
+            user_override_a = false;
+            a_down = false;
+            if (d_down) {
+                d_pressed_time = timer_read();
             }
-
-            if (is_lalt_pressed()) return true;
-            if (is_mid_air) return true;
-
-            bool opposite_pressed = is_w ? s_down : w_down;
-            if (opposite_pressed) return true;
-
-            uint16_t held_time = (keycode == KC_W) ? timer_elapsed(w_pressed_time)
-                                                   : timer_elapsed(s_pressed_time);
-            uint16_t press_duration = getCounterStrafeHoldTime(held_time);
-
-            async.active = true;
-            async.start_time = timer_read();
-            async.duration = press_duration;
-            async.keycode = (keycode == KC_W) ? KC_S : KC_W;
-            async.key_sent = false;
+            
+            // 키를 뗄 때 카운터 스트레이프 로직
+            if (!is_lalt_pressed() && !is_mid_air && !d_down && !ad_async.active) {
+                uint16_t held_time = timer_elapsed(a_pressed_time);
+                trigger_counter_strafe(KC_A, held_time, false);
+            }
+        }
+    }
+    
+    if (keycode == KC_D) {
+        if (record->event.pressed) {
+            user_override_d = true;
+            d_pressed_time = timer_read();
+            d_down = true;
+        } else {
+            user_override_d = false;
+            d_down = false;
+            if (a_down) {
+                a_pressed_time = timer_read();
+            }
+            
+            // 키를 뗄 때 카운터 스트레이프 로직
+            if (!is_lalt_pressed() && !is_mid_air && !a_down && !ad_async.active) {
+                uint16_t held_time = timer_elapsed(d_pressed_time);
+                trigger_counter_strafe(KC_D, held_time, false);
+            }
         }
     }
 
@@ -177,24 +234,47 @@ void matrix_scan_user(void) {
         is_mid_air = false;
     }
 
-    if (!async.active) return;
+    // W/S async 처리
+    if (ws_async.active) {
+        uint16_t elapsed = timer_elapsed(ws_async.start_time);
 
-    uint16_t elapsed = timer_elapsed(async.start_time);
-
-    if (!async.key_sent && elapsed >= 0) {
-        register_code(async.keycode);
-        async.key_sent = true;
-    }
-
-    if (async.key_sent && elapsed >= async.duration) {
-        bool user_holding =
-            (async.keycode == KC_W && user_override_w) ||
-            (async.keycode == KC_S && user_override_s);
-
-        if (!user_holding) {
-            unregister_code(async.keycode);
+        if (!ws_async.key_sent && elapsed >= 0) {
+            register_code(ws_async.keycode);
+            ws_async.key_sent = true;
         }
 
-        async.active = false;
+        if (ws_async.key_sent && elapsed >= ws_async.duration) {
+            bool user_holding =
+                (ws_async.keycode == KC_W && user_override_w) ||
+                (ws_async.keycode == KC_S && user_override_s);
+
+            if (!user_holding) {
+                unregister_code(ws_async.keycode);
+            }
+
+            ws_async.active = false;
+        }
+    }
+
+    // A/D async 처리
+    if (ad_async.active) {
+        uint16_t elapsed = timer_elapsed(ad_async.start_time);
+
+        if (!ad_async.key_sent && elapsed >= 0) {
+            register_code(ad_async.keycode);
+            ad_async.key_sent = true;
+        }
+
+        if (ad_async.key_sent && elapsed >= ad_async.duration) {
+            bool user_holding =
+                (ad_async.keycode == KC_A && user_override_a) ||
+                (ad_async.keycode == KC_D && user_override_d);
+
+            if (!user_holding) {
+                unregister_code(ad_async.keycode);
+            }
+
+            ad_async.active = false;
+        }
     }
 }

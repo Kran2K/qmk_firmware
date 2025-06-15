@@ -90,13 +90,14 @@ bool user_override_s = false;
 uint16_t w_pressed_time = 0;
 uint16_t s_pressed_time = 0;
 
+bool is_mid_air = false;
+uint16_t mid_air_start_time = 0;
+
 float getCounterStrafeHoldTime(float ms) {
-    if (ms < 25.5f) return 0.0f;
-    if (ms > 560.0f) return 118.0f;
+    if (ms < 80.0f) return 0.0f;
+    if (ms > 560.0f) return 115.0f;
     return -0.00034f * ms * ms + 0.355f * ms + 25.5f;
 }
-
-bool is_space_pressed_before = false;
 
 bool is_lalt_pressed(void) {
     return get_mods() & MOD_BIT(KC_LALT);
@@ -111,7 +112,8 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
     if (!strafe_enabled) return true;
 
     if (keycode == KC_SPC && record->event.pressed) {
-        is_space_pressed_before = true;
+        is_mid_air = true;
+        mid_air_start_time = timer_read();
         return true;
     }
 
@@ -150,10 +152,7 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
             }
 
             if (is_lalt_pressed()) return true;
-            if (is_space_pressed_before) {
-                is_space_pressed_before = false;
-                return true;
-            }
+            if (is_mid_air) return true;
 
             bool opposite_pressed = is_w ? s_down : w_down;
             if (opposite_pressed) return true;
@@ -174,6 +173,10 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
 }
 
 void matrix_scan_user(void) {
+    if (is_mid_air && timer_elapsed(mid_air_start_time) > 650) {
+        is_mid_air = false;
+    }
+
     if (!async.active) return;
 
     uint16_t elapsed = timer_elapsed(async.start_time);
@@ -184,7 +187,6 @@ void matrix_scan_user(void) {
     }
 
     if (async.key_sent && elapsed >= async.duration) {
-
         bool user_holding =
             (async.keycode == KC_W && user_override_w) ||
             (async.keycode == KC_S && user_override_s);

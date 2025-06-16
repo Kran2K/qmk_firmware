@@ -99,32 +99,30 @@ uint16_t d_pressed_time = 0;
 bool is_mid_air = false;
 uint16_t mid_air_start_time = 0;
 
-float getCounterStrafeHoldTime(float ms) {
-    if (ms < 80.0f) return 0.0f;
-    if (ms > 560.0f) return 115.0f;
-    return -0.00034f * ms * ms + 0.355f * ms + 25.5f;
-}
-
-float getCounterStrafeHoldTimeAD(float ms) {
-    if (ms < 150.0f) return 0.0f;
-    if (ms > 560.0f) return 115.0f;
-    return -0.00034f * ms * ms + 0.355f * ms + 25.5f;
-}
-
 bool is_lalt_pressed(void) {
     return get_mods() & MOD_BIT(KC_LALT);
 }
 
+float getCounterStrafeHoldTime(float ms, bool is_ws_axis) {
+    float min_threshold = is_ws_axis ? 80.0f  : 150.0f;
+    float max_threshold = 560.0f;
+    float max_output    = 115.0f;
+
+    if (ms < min_threshold) return 0.0f;
+    if (ms > max_threshold) return max_output;
+
+    return -0.00034f * ms * ms + 0.355f * ms + 25.5f;
+}
+
 void trigger_counter_strafe(uint16_t held_key, uint16_t held_time, bool is_ws_axis) {
-    uint16_t counter_key = (held_key == KC_W) ? KC_S : 
-                          (held_key == KC_S) ? KC_W :
-                          (held_key == KC_A) ? KC_D : KC_A;
-    
-    uint16_t press_duration = is_ws_axis ? getCounterStrafeHoldTime(held_time) : 
-                                          getCounterStrafeHoldTimeAD(held_time);
-    
+    uint16_t counter_key = (held_key == KC_W) ? KC_S :
+                           (held_key == KC_S) ? KC_W :
+                           (held_key == KC_A) ? KC_D : KC_A;
+
+    uint16_t press_duration = getCounterStrafeHoldTime(held_time, is_ws_axis);
+
     async_key_t *target_async = is_ws_axis ? &ws_async : &ad_async;
-    
+
     target_async->active = true;
     target_async->start_time = timer_read();
     target_async->duration = press_duration;

@@ -253,7 +253,7 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
                             // uprintf("ignoring short both state!! both_held_time:%d\n", both_held_time);
                             ad_cs_state = AD_CS_STATE_D_AUTO;
                             // 이미 both_held_time 만큼 감속 했기 때문에 총 시간에서 both_held_time을 빼줌
-                            auto_cs_hold_duration = getCounterStrafeHoldTime(timer_elapsed(a_key_timer), false) - both_held_time;
+                            auto_cs_hold_duration = MAX(0, getCounterStrafeHoldTime(timer_elapsed(a_key_timer), false) - both_held_time);
                             auto_cs_timer_start   = timer_read32();
                             if (!is_mid_air && !is_lalt_pressed()) {
                                 register_code(KC_D);
@@ -319,7 +319,7 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
                             // uprintf("ignoring short both state!! both_held_time:%d\n", both_held_time);
                             ad_cs_state = AD_CS_STATE_A_AUTO;
                             // 이미 both_held_time 만큼 감속 했기 때문에 총 시간에서 both_held_time을 빼줌
-                            auto_cs_hold_duration = getCounterStrafeHoldTime(timer_elapsed(d_key_timer), false) - both_held_time;
+                            auto_cs_hold_duration = MAX(0, getCounterStrafeHoldTime(timer_elapsed(d_key_timer), false) - both_held_time);
                             auto_cs_timer_start   = timer_read32();
                             if (!is_mid_air && !is_lalt_pressed()) {
                                 register_code(KC_A);
@@ -379,7 +379,7 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
                         uint16_t both_held_time = timer_elapsed(ws_both_held_timer);
                         if (both_held_time <= BOTH_HELD_PADDING_MS) {
                             ws_cs_state              = WS_CS_STATE_S_AUTO;
-                            auto_ws_cs_hold_duration = getCounterStrafeHoldTime(timer_elapsed(w_key_timer), true) - both_held_time;
+                            auto_ws_cs_hold_duration = MAX(0, getCounterStrafeHoldTime(timer_elapsed(w_key_timer), true) - both_held_time);
                             auto_ws_cs_timer_start   = timer_read32();
                             if (!is_mid_air && !is_lalt_pressed()) {
                                 register_code(KC_S);
@@ -439,7 +439,7 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
                         uint16_t both_held_time = timer_elapsed(ws_both_held_timer);
                         if (both_held_time <= BOTH_HELD_PADDING_MS) {
                             ws_cs_state              = WS_CS_STATE_W_AUTO;
-                            auto_ws_cs_hold_duration = getCounterStrafeHoldTime(timer_elapsed(s_key_timer), true) - both_held_time;
+                            auto_ws_cs_hold_duration = MAX(0, getCounterStrafeHoldTime(timer_elapsed(s_key_timer), true) - both_held_time);
                             auto_ws_cs_timer_start   = timer_read32();
                             if (!is_mid_air && !is_lalt_pressed()) {
                                 register_code(KC_W);
@@ -489,7 +489,6 @@ void matrix_scan_user(void) {
     if (ad_cs_state == AD_CS_STATE_A_AUTO) {
         if (timer_elapsed32(auto_cs_timer_start) >= auto_cs_hold_duration) {
             if (a_physical_pressed) {
-                register_code(KC_A);
                 ad_cs_state = AD_CS_STATE_A_HELD;
             } else {
                 unregister_code(KC_A);
@@ -499,7 +498,6 @@ void matrix_scan_user(void) {
     } else if (ad_cs_state == AD_CS_STATE_D_AUTO) {
         if (timer_elapsed32(auto_cs_timer_start) >= auto_cs_hold_duration) {
             if (d_physical_pressed) {
-                register_code(KC_D);
                 ad_cs_state = AD_CS_STATE_D_HELD;
             } else {
                 unregister_code(KC_D);
@@ -512,7 +510,6 @@ void matrix_scan_user(void) {
     if (ws_cs_state == WS_CS_STATE_W_AUTO) {
         if (timer_elapsed32(auto_ws_cs_timer_start) >= auto_ws_cs_hold_duration) {
             if (w_physical_pressed) {
-                register_code(KC_W);
                 ws_cs_state = WS_CS_STATE_W_HELD;
             } else {
                 unregister_code(KC_W);
@@ -522,7 +519,6 @@ void matrix_scan_user(void) {
     } else if (ws_cs_state == WS_CS_STATE_S_AUTO) {
         if (timer_elapsed32(auto_ws_cs_timer_start) >= auto_ws_cs_hold_duration) {
             if (s_physical_pressed) {
-                register_code(KC_S);
                 ws_cs_state = WS_CS_STATE_S_HELD;
             } else {
                 unregister_code(KC_S);

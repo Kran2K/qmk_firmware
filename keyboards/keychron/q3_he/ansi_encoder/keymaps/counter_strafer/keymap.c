@@ -1,3 +1,4 @@
+
 /* Copyright 2024 @ Keychron (https://www.keychron.com)
  *
  * This program is free software: you can redistribute it and/or modify
@@ -31,9 +32,10 @@ enum custom_keycodes {
     CS_D,
     CS_W,
     CS_S,
-    FN_F4_TOGGLE,
+    FN_DEL_TOGGLE,
+    FN_END_TOGGLE,
+    FN_PGDN_TOGGLE,
 };
-
 
 #define FN_MAC MO(MAC_FN)
 #define FN_WIN MO(WIN_FN)
@@ -51,7 +53,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     [MAC_FN] = LAYOUT_ansi_87(
         _______,  KC_F1,    KC_F2,    KC_F3,    KC_F4,    KC_F5,    KC_F6,    KC_F7,    KC_F8,    KC_F9,    KC_F10,   KC_F11,   KC_F12,   RGB_TOG,   _______,  _______,  RGB_TOG,
         _______,  BT_HST1,  BT_HST2,  BT_HST3,  P2P4G,    _______,  _______,  _______,  _______,  _______,  _______,  _______,  _______,  _______,   _______,  _______,  _______,
-        RGB_TOG,  RGB_MOD,  RGB_VAI,  RGB_HUI,  RGB_SAI,  RGB_SPI,  _______,  _______,  _______,  _______,  _______,  _______,  _______,  _______,   _______,  _______,  _______,
+        RGB_TOG,  RGB_MOD,  RGB_VAI,  RGB_HUI,  RGB_SAI,  RGB_SPI,  _______,  _______,  _______,  _______,  _______,  _______,  _______,  _______,   FN_DEL_TOGGLE,  FN_END_TOGGLE,  FN_PGDN_TOGGLE,
         _______,  RGB_RMOD, RGB_VAD,  RGB_HUD,  RGB_SAD,  RGB_SPD,  _______,  _______,  _______,  _______,  _______,  _______,            _______,
         _______,            _______,  _______,  _______,  _______,  BAT_LVL,  NK_TOGG,  _______,  _______,  _______,  _______,            _______,             _______,
         _______,  _______,  _______,                                _______,                                _______,  _______,  _______,  _______,   _______,  _______,  _______),
@@ -65,9 +67,9 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
         KC_LCTL,  KC_LWIN,  KC_LALT,                                KC_SPC,                                 KC_RALT,  KC_RWIN,  FN_WIN,   KC_RCTL,   KC_LEFT,  KC_DOWN,  KC_RGHT),
 
     [WIN_FN] = LAYOUT_ansi_87(
-        _______,  KC_BRID,  KC_BRIU,  KC_TASK,  FN_F4_TOGGLE,  RGB_VAD,  RGB_VAI,  KC_MPRV,  KC_MPLY,  KC_MNXT,  KC_MUTE,  KC_VOLD,  KC_VOLU,  RGB_TOG,   _______,  _______,  RGB_TOG,
+        _______,  KC_BRID,  KC_BRIU,  KC_TASK,  KC_FILE,  RGB_VAD,  RGB_VAI,  KC_MPRV,  KC_MPLY,  KC_MNXT,  KC_MUTE,  KC_VOLD,  KC_VOLU,  RGB_TOG,   _______,  _______,  RGB_TOG,
         _______,  BT_HST1,  BT_HST2,  BT_HST3,  P2P4G,    _______,  _______,  _______,  _______,  _______,  _______,  _______,  _______,  _______,   _______,  _______,  _______,
-        RGB_TOG,  RGB_MOD,  RGB_VAI,  RGB_HUI,  RGB_SAI,  RGB_SPI,  _______,  _______,  _______,  _______,  _______,  _______,  _______,  _______,   _______,  _______,  _______,
+        RGB_TOG,  RGB_MOD,  RGB_VAI,  RGB_HUI,  RGB_SAI,  RGB_SPI,  _______,  _______,  _______,  _______,  _______,  _______,  _______,  _______,   FN_DEL_TOGGLE,  FN_END_TOGGLE,  FN_PGDN_TOGGLE,
         _______,  RGB_RMOD, RGB_VAD,  RGB_HUD,  RGB_SAD,  RGB_SPD,  _______,  _______,  _______,  _______,  _______,  _______,            _______,
         _______,            _______,  _______,  _______,  _______,  BAT_LVL,  NK_TOGG,  _______,  _______,  _______,  _______,            _______,             _______,
         _______,  _______,  _______,                                _______,                                _______,  _______,  _______,  _______,   _______,  _______,  _______),
@@ -101,51 +103,17 @@ typedef enum {
     WS_CS_STATE_S_AUTO,
 } ws_cs_state_t;
 
-const char *get_ad_cs_state_str(ad_cs_state_t state) {
-    switch (state) {
-        case AD_CS_STATE_IDLE:
-            return "IDLE";
-        case AD_CS_STATE_A_HELD:
-            return "A_HELD";
-        case AD_CS_STATE_D_HELD:
-            return "D_HELD";
-        case AD_CS_STATE_BOTH_HELD:
-            return "BOTH_HELD";
-        case AD_CS_STATE_A_AUTO:
-            return "A_AUTO";
-        case AD_CS_STATE_D_AUTO:
-            return "D_AUTO";
-        default:
-            return "UNKNOWN";
-    }
-}
-
-const char *get_ws_cs_state_str(ws_cs_state_t state) {
-    switch (state) {
-        case WS_CS_STATE_IDLE:
-            return "IDLE";
-        case WS_CS_STATE_W_HELD:
-            return "W_HELD";
-        case WS_CS_STATE_S_HELD:
-            return "S_HELD";
-        case WS_CS_STATE_BOTH_HELD:
-            return "BOTH_HELD";
-        case WS_CS_STATE_W_AUTO:
-            return "W_AUTO";
-        case WS_CS_STATE_S_AUTO:
-            return "S_AUTO";
-        default:
-            return "UNKNOWN";
-    }
-}
-
 #define BOTH_HELD_PADDING_MS 80
+#define ALT_DELAY_MS 1500
+#define RAPID_FIRE_MIN_MS 135
+#define RAPID_FIRE_MAX_MS 145
 
 static bool strafe_enabled = false;
+static bool rapid_fire_enabled = false;
+static bool gaming_mode_enabled = false;
 
 // AD Strafe
 static ad_cs_state_t ad_cs_state = AD_CS_STATE_IDLE;
-// static ad_cs_state_t prev_ad_cs_state         = AD_CS_STATE_IDLE;
 static uint16_t a_key_timer           = 0;
 static uint16_t d_key_timer           = 0;
 static uint16_t auto_cs_hold_duration = 0;
@@ -156,7 +124,6 @@ static uint16_t both_held_timer       = 0;
 
 // WS Strafe
 static ws_cs_state_t ws_cs_state = WS_CS_STATE_IDLE;
-// static ws_cs_state_t prev_ws_cs_state = WS_CS_STATE_IDLE;
 static uint16_t w_key_timer              = 0;
 static uint16_t s_key_timer              = 0;
 static uint16_t auto_ws_cs_hold_duration = 0;
@@ -169,8 +136,16 @@ static uint16_t ws_both_held_timer       = 0;
 static bool     is_mid_air         = false;
 static uint16_t mid_air_start_time = 0;
 
+// ALT delay tracking
+static uint32_t alt_release_time = 0;
+
+// Rapid fire C key
+static bool     c_physical_pressed = false;
+static uint32_t c_last_fire_time = 0;
+static uint16_t c_next_interval = RAPID_FIRE_MIN_MS;
+
 uint16_t getCounterStrafeHoldTime(uint16_t ms, bool is_ws_axis) {
-    uint16_t min_threshold = is_ws_axis ? 70.0  : 120.0;
+    uint16_t min_threshold = is_ws_axis ? 70.0  : 100.0;
     uint16_t max_threshold = 560;
     uint16_t max_output    = 115;
 
@@ -182,19 +157,73 @@ uint16_t getCounterStrafeHoldTime(uint16_t ms, bool is_ws_axis) {
     return (uint16_t)res;
 }
 
-bool is_lalt_pressed(void) {
-    return get_mods() & MOD_BIT(KC_LALT);
+bool should_disable_counter_strafe(void) {
+    if (timer_elapsed32(alt_release_time) < ALT_DELAY_MS) {
+        return true;
+    } 
+
+    bool lalt_pressed = get_mods() & MOD_BIT(KC_LALT);
+    
+    if (lalt_pressed) {
+        return true;
+    }
+    
+    return false;
 }
 
 bool process_record_user(uint16_t keycode, keyrecord_t *record) {
-    if (keycode == FN_F4_TOGGLE && record->event.pressed) {
-        strafe_enabled = !strafe_enabled;
-        return false;
+    // Track ALT release
+    if (keycode == KC_LALT && !record->event.pressed) {
+        alt_release_time = timer_read32();
+    }
+
+    // Gaming mode filter
+    if (gaming_mode_enabled) {
+        if (keycode == KC_GRV || keycode == KC_LWIN || keycode == KC_RWIN) {
+            return false;
+        }
+    }
+
+    // Toggle handlers
+    if (record->event.pressed) {
+        switch (keycode) {
+            case FN_DEL_TOGGLE:
+                strafe_enabled = !strafe_enabled;
+                return false;
+            case FN_END_TOGGLE:
+                rapid_fire_enabled = !rapid_fire_enabled;
+                return false;
+            case FN_PGDN_TOGGLE:
+                gaming_mode_enabled = !gaming_mode_enabled;
+                return false;
+            default:
+                break;
+        }
     }
 
     if (keycode == KC_SPC && record->event.pressed) {
-        is_mid_air         = true;
+        is_mid_air = true;
         mid_air_start_time = timer_read();
+    }
+
+    // Rapid fire C key
+    if (keycode == KC_C) {
+        if (record->event.pressed) {
+            c_physical_pressed = true;
+            if (rapid_fire_enabled) {
+                register_code(KC_C);
+                c_last_fire_time = timer_read32();
+                c_next_interval = RAPID_FIRE_MIN_MS + (rand() % (RAPID_FIRE_MAX_MS - RAPID_FIRE_MIN_MS + 1));
+                return false;
+            }
+        } else {
+            c_physical_pressed = false;
+            if (rapid_fire_enabled) {
+                unregister_code(KC_C);
+                return false;
+            }
+        }
+        return true;
     }
 
     if (!strafe_enabled) {
@@ -217,8 +246,8 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
                         ad_cs_state = AD_CS_STATE_A_HELD;
                         break;
                     case AD_CS_STATE_D_HELD:
-                        ad_cs_state     = AD_CS_STATE_BOTH_HELD;
                         both_held_timer = timer_read(); // BOTH 상태 진입 시 타이머 시작
+                        ad_cs_state = AD_CS_STATE_BOTH_HELD;
                         break;
                     case AD_CS_STATE_D_AUTO:
                         unregister_code(KC_D);
@@ -231,19 +260,16 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
                 register_code(KC_A);
             } else {
                 a_physical_pressed = false;
-                if (ad_cs_state == AD_CS_STATE_A_AUTO) {
-                    // uprintf("i am going to ignore user's early A release!!\n");
-                    return false;
-                }
+                if (ad_cs_state == AD_CS_STATE_A_AUTO) return false;
                 unregister_code(KC_A);
                 switch (ad_cs_state) {
                     case AD_CS_STATE_A_HELD: {
-                        uint16_t held_time    = timer_elapsed(a_key_timer);
+                        uint16_t held_time = timer_elapsed(a_key_timer);
                         auto_cs_hold_duration = getCounterStrafeHoldTime(held_time, false);
                         if (auto_cs_hold_duration > 0) {
-                            ad_cs_state         = AD_CS_STATE_D_AUTO;
+                            ad_cs_state = AD_CS_STATE_D_AUTO;
                             auto_cs_timer_start = timer_read32();
-                            if (!is_mid_air && !is_lalt_pressed()) {
+                            if (!is_mid_air && !should_disable_counter_strafe()) {
                                 register_code(KC_D);
                             }
                         } else {
@@ -259,8 +285,8 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
                             ad_cs_state = AD_CS_STATE_D_AUTO;
                             // 이미 both_held_time 만큼 감속 했기 때문에 총 시간에서 both_held_time을 빼줌
                             auto_cs_hold_duration = MAX(0, getCounterStrafeHoldTime(timer_elapsed(a_key_timer), false) - both_held_time);
-                            auto_cs_timer_start   = timer_read32();
-                            if (!is_mid_air && !is_lalt_pressed()) {
+                            auto_cs_timer_start = timer_read32();
+                            if (!is_mid_air && !should_disable_counter_strafe()) {
                                 register_code(KC_D);
                             }
                         } else {
@@ -283,8 +309,8 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
                         ad_cs_state = AD_CS_STATE_D_HELD;
                         break;
                     case AD_CS_STATE_A_HELD:
-                        ad_cs_state     = AD_CS_STATE_BOTH_HELD;
                         both_held_timer = timer_read(); // BOTH 상태 진입 시 타이머 시작
+                        ad_cs_state = AD_CS_STATE_BOTH_HELD;
                         break;
                     case AD_CS_STATE_A_AUTO:
                         unregister_code(KC_A);
@@ -297,19 +323,16 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
                 register_code(KC_D);
             } else {
                 d_physical_pressed = false;
-                if (ad_cs_state == AD_CS_STATE_D_AUTO) {
-                    // uprintf("i am going to ignore user's early D release!!\n");
-                    return false;
-                }
+                if (ad_cs_state == AD_CS_STATE_D_AUTO) return false;
                 unregister_code(KC_D);
                 switch (ad_cs_state) {
                     case AD_CS_STATE_D_HELD: {
-                        uint16_t held_time    = timer_elapsed(d_key_timer);
+                        uint16_t held_time = timer_elapsed(d_key_timer);
                         auto_cs_hold_duration = getCounterStrafeHoldTime(held_time, false);
                         if (auto_cs_hold_duration > 0) {
-                            ad_cs_state         = AD_CS_STATE_A_AUTO;
+                            ad_cs_state = AD_CS_STATE_A_AUTO;
                             auto_cs_timer_start = timer_read32();
-                            if (!is_mid_air && !is_lalt_pressed()) {
+                            if (!is_mid_air && !should_disable_counter_strafe()) {
                                 register_code(KC_A);
                             }
                         } else {
@@ -320,13 +343,10 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
                     case AD_CS_STATE_BOTH_HELD: {
                         uint16_t both_held_time = timer_elapsed(both_held_timer);
                         if (both_held_time <= BOTH_HELD_PADDING_MS) {
-                            // 짧은 시간 BOTH였다면 A_AUTO 진입
-                            // uprintf("ignoring short both state!! both_held_time:%d\n", both_held_time);
                             ad_cs_state = AD_CS_STATE_A_AUTO;
-                            // 이미 both_held_time 만큼 감속 했기 때문에 총 시간에서 both_held_time을 빼줌
                             auto_cs_hold_duration = MAX(0, getCounterStrafeHoldTime(timer_elapsed(d_key_timer), false) - both_held_time);
-                            auto_cs_timer_start   = timer_read32();
-                            if (!is_mid_air && !is_lalt_pressed()) {
+                            auto_cs_timer_start = timer_read32();
+                            if (!is_mid_air && !should_disable_counter_strafe()) {
                                 register_code(KC_A);
                             }
                         } else {
@@ -349,7 +369,7 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
                         ws_cs_state = WS_CS_STATE_W_HELD;
                         break;
                     case WS_CS_STATE_S_HELD:
-                        ws_cs_state        = WS_CS_STATE_BOTH_HELD;
+                        ws_cs_state = WS_CS_STATE_BOTH_HELD;
                         ws_both_held_timer = timer_read();
                         break;
                     case WS_CS_STATE_S_AUTO:
@@ -367,12 +387,12 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
                 unregister_code(KC_W);
                 switch (ws_cs_state) {
                     case WS_CS_STATE_W_HELD: {
-                        uint16_t held_time       = timer_elapsed(w_key_timer);
+                        uint16_t held_time = timer_elapsed(w_key_timer);
                         auto_ws_cs_hold_duration = getCounterStrafeHoldTime(held_time, true);
                         if (auto_ws_cs_hold_duration > 0) {
-                            ws_cs_state            = WS_CS_STATE_S_AUTO;
+                            ws_cs_state = WS_CS_STATE_S_AUTO;
                             auto_ws_cs_timer_start = timer_read32();
-                            if (!is_mid_air && !is_lalt_pressed()) {
+                            if (!is_mid_air && !should_disable_counter_strafe()) {
                                 register_code(KC_S);
                             }
                         } else {
@@ -383,10 +403,10 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
                     case WS_CS_STATE_BOTH_HELD: {
                         uint16_t both_held_time = timer_elapsed(ws_both_held_timer);
                         if (both_held_time <= BOTH_HELD_PADDING_MS) {
-                            ws_cs_state              = WS_CS_STATE_S_AUTO;
+                            ws_cs_state = WS_CS_STATE_S_AUTO;
                             auto_ws_cs_hold_duration = MAX(0, getCounterStrafeHoldTime(timer_elapsed(w_key_timer), true) - both_held_time);
-                            auto_ws_cs_timer_start   = timer_read32();
-                            if (!is_mid_air && !is_lalt_pressed()) {
+                            auto_ws_cs_timer_start = timer_read32();
+                            if (!is_mid_air && !should_disable_counter_strafe()) {
                                 register_code(KC_S);
                             }
                         } else {
@@ -409,7 +429,7 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
                         ws_cs_state = WS_CS_STATE_S_HELD;
                         break;
                     case WS_CS_STATE_W_HELD:
-                        ws_cs_state        = WS_CS_STATE_BOTH_HELD;
+                        ws_cs_state = WS_CS_STATE_BOTH_HELD;
                         ws_both_held_timer = timer_read();
                         break;
                     case WS_CS_STATE_W_AUTO:
@@ -427,12 +447,12 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
                 unregister_code(KC_S);
                 switch (ws_cs_state) {
                     case WS_CS_STATE_S_HELD: {
-                        uint16_t held_time       = timer_elapsed(s_key_timer);
+                        uint16_t held_time = timer_elapsed(s_key_timer);
                         auto_ws_cs_hold_duration = getCounterStrafeHoldTime(held_time, true);
                         if (auto_ws_cs_hold_duration > 0) {
-                            ws_cs_state            = WS_CS_STATE_W_AUTO;
+                            ws_cs_state = WS_CS_STATE_W_AUTO;
                             auto_ws_cs_timer_start = timer_read32();
-                            if (!is_mid_air && !is_lalt_pressed()) {
+                            if (!is_mid_air && !should_disable_counter_strafe()) {
                                 register_code(KC_W);
                             }
                         } else {
@@ -443,10 +463,10 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
                     case WS_CS_STATE_BOTH_HELD: {
                         uint16_t both_held_time = timer_elapsed(ws_both_held_timer);
                         if (both_held_time <= BOTH_HELD_PADDING_MS) {
-                            ws_cs_state              = WS_CS_STATE_W_AUTO;
+                            ws_cs_state = WS_CS_STATE_W_AUTO;
                             auto_ws_cs_hold_duration = MAX(0, getCounterStrafeHoldTime(timer_elapsed(s_key_timer), true) - both_held_time);
-                            auto_ws_cs_timer_start   = timer_read32();
-                            if (!is_mid_air && !is_lalt_pressed()) {
+                            auto_ws_cs_timer_start = timer_read32();
+                            if (!is_mid_air && !should_disable_counter_strafe()) {
                                 register_code(KC_W);
                             }
                         } else {
@@ -472,23 +492,16 @@ void matrix_scan_user(void) {
         is_mid_air = false;
     }
 
-    // if (ws_cs_state != prev_ws_cs_state) {
-    //     if (ws_cs_state == WS_CS_STATE_W_AUTO || ws_cs_state == WS_CS_STATE_S_AUTO) {
-    //         uprintf("[%lu] WS CS State: %s -> %s auto held for %dms\n", timer_read32(), get_ws_cs_state_str(prev_ws_cs_state), get_ws_cs_state_str(ws_cs_state), auto_ws_cs_hold_duration);
-    //     } else {
-    //         uprintf("[%lu] WS CS State: %s -> %s\n", timer_read32(), get_ws_cs_state_str(prev_ws_cs_state), get_ws_cs_state_str(ws_cs_state));
-    //     }
-    //     prev_ws_cs_state = ws_cs_state;
-    // }
-
-    // if (ad_cs_state != prev_ad_cs_state) {
-    //     if(ad_cs_state == AD_CS_STATE_A_AUTO || ad_cs_state == AD_CS_STATE_D_AUTO){
-    //         uprintf("[%lu] CS State: %s -> %s auto held for  %dms\n", timer_read32(), get_ad_cs_state_str(prev_ad_cs_state), get_ad_cs_state_str(ad_cs_state),  auto_cs_hold_duration);
-    //     } else {
-    //         uprintf("[%lu] CS State: %s -> %s\n", timer_read32(), get_ad_cs_state_str(prev_ad_cs_state), get_ad_cs_state_str(ad_cs_state));
-    //     }
-    //     prev_ad_cs_state = ad_cs_state;
-    // }
+    // Rapid fire C key
+    if (rapid_fire_enabled && c_physical_pressed) {
+        if (timer_elapsed32(c_last_fire_time) >= c_next_interval) {
+            unregister_code(KC_C);
+            wait_ms(5);
+            register_code(KC_C);
+            c_last_fire_time = timer_read32();
+            c_next_interval = RAPID_FIRE_MIN_MS + (rand() % (RAPID_FIRE_MAX_MS - RAPID_FIRE_MIN_MS + 1));
+        }
+    }
 
     // AD Strafe Auto Logic
     if (ad_cs_state == AD_CS_STATE_A_AUTO) {

@@ -32,6 +32,7 @@ enum custom_keycodes {
     CS_D,
     CS_W,
     CS_S,
+    FN_INS_TOGGLE,
     FN_DEL_TOGGLE,
     FN_END_TOGGLE,
     FN_PGDN_TOGGLE,
@@ -52,7 +53,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 
     [MAC_FN] = LAYOUT_ansi_87(
         _______,  KC_F1,    KC_F2,    KC_F3,    KC_F4,    KC_F5,    KC_F6,    KC_F7,    KC_F8,    KC_F9,    KC_F10,   KC_F11,   KC_F12,   RGB_TOG,   _______,  _______,  RGB_TOG,
-        _______,  BT_HST1,  BT_HST2,  BT_HST3,  P2P4G,    _______,  _______,  _______,  _______,  _______,  _______,  _______,  _______,  _______,   _______,  _______,  _______,
+        _______,  BT_HST1,  BT_HST2,  BT_HST3,  P2P4G,    _______,  _______,  _______,  _______,  _______,  _______,  _______,  _______,  _______,   FN_INS_TOGGLE,  _______,  _______,
         RGB_TOG,  RGB_MOD,  RGB_VAI,  RGB_HUI,  RGB_SAI,  RGB_SPI,  _______,  _______,  _______,  _______,  _______,  _______,  _______,  _______,   FN_DEL_TOGGLE,  FN_END_TOGGLE,  FN_PGDN_TOGGLE,
         _______,  RGB_RMOD, RGB_VAD,  RGB_HUD,  RGB_SAD,  RGB_SPD,  _______,  _______,  _______,  _______,  _______,  _______,            _______,
         _______,            _______,  _______,  _______,  _______,  BAT_LVL,  NK_TOGG,  _______,  _______,  _______,  _______,            _______,             _______,
@@ -68,7 +69,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 
     [WIN_FN] = LAYOUT_ansi_87(
         _______,  KC_BRID,  KC_BRIU,  KC_TASK,  KC_FILE,  RGB_VAD,  RGB_VAI,  KC_MPRV,  KC_MPLY,  KC_MNXT,  KC_MUTE,  KC_VOLD,  KC_VOLU,  RGB_TOG,   _______,  _______,  RGB_TOG,
-        _______,  BT_HST1,  BT_HST2,  BT_HST3,  P2P4G,    _______,  _______,  _______,  _______,  _______,  _______,  _______,  _______,  _______,   _______,  _______,  _______,
+        _______,  BT_HST1,  BT_HST2,  BT_HST3,  P2P4G,    _______,  _______,  _______,  _______,  _______,  _______,  _______,  _______,  _______,   FN_INS_TOGGLE,  _______,  _______,
         RGB_TOG,  RGB_MOD,  RGB_VAI,  RGB_HUI,  RGB_SAI,  RGB_SPI,  _______,  _______,  _______,  _______,  _______,  _______,  _______,  _______,   FN_DEL_TOGGLE,  FN_END_TOGGLE,  FN_PGDN_TOGGLE,
         _______,  RGB_RMOD, RGB_VAD,  RGB_HUD,  RGB_SAD,  RGB_SPD,  _______,  _______,  _______,  _______,  _______,  _______,            _______,
         _______,            _______,  _______,  _______,  _______,  BAT_LVL,  NK_TOGG,  _______,  _______,  _______,  _______,            _______,             _______,
@@ -108,7 +109,8 @@ typedef enum {
 #define RAPID_FIRE_MIN_MS 135
 #define RAPID_FIRE_MAX_MS 145
 
-static bool strafe_enabled = false;
+static bool ws_strafe_enabled = false;
+static bool ad_strafe_enabled = false;
 static bool rapid_fire_enabled = false;
 static bool gaming_mode_enabled = false;
 
@@ -145,7 +147,7 @@ static uint32_t c_last_fire_time = 0;
 static uint16_t c_next_interval = RAPID_FIRE_MIN_MS;
 
 uint16_t getCounterStrafeHoldTime(uint16_t ms, bool is_ws_axis) {
-    uint16_t min_threshold = is_ws_axis ? 70.0  : 100.0;
+    uint16_t min_threshold = is_ws_axis ? 70.0  : 125.0;
     uint16_t max_threshold = 560;
     uint16_t max_output    = 115;
 
@@ -188,7 +190,10 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
     if (record->event.pressed) {
         switch (keycode) {
             case FN_DEL_TOGGLE:
-                strafe_enabled = !strafe_enabled;
+                ad_strafe_enabled = !ad_strafe_enabled;
+                return false;
+            case FN_INS_TOGGLE:
+                ws_strafe_enabled = !ws_strafe_enabled;
                 return false;
             case FN_END_TOGGLE:
                 rapid_fire_enabled = !rapid_fire_enabled;
@@ -226,15 +231,20 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
         return true;
     }
 
-    if (!strafe_enabled) {
+    if (!ws_strafe_enabled) {
         switch (keycode) {
-            case CS_A: if (record->event.pressed) register_code(KC_A); else unregister_code(KC_A); return false;
-            case CS_D: if (record->event.pressed) register_code(KC_D); else unregister_code(KC_D); return false;
             case CS_W: if (record->event.pressed) register_code(KC_W); else unregister_code(KC_W); return false;
             case CS_S: if (record->event.pressed) register_code(KC_S); else unregister_code(KC_S); return false;
             default: break;
         }
-        return true;
+    }
+
+    if (!ad_strafe_enabled) {
+        switch (keycode) {
+            case CS_A: if (record->event.pressed) register_code(KC_A); else unregister_code(KC_A); return false;
+            case CS_D: if (record->event.pressed) register_code(KC_D); else unregister_code(KC_D); return false;
+            default: break;
+        }
     }
 
     switch (keycode) {

@@ -105,9 +105,9 @@ typedef enum {
 } ws_cs_state_t;
 
 #define BOTH_HELD_PADDING_MS 80
-#define ALT_DELAY_MS 1500
-#define RAPID_FIRE_MIN_MS 135
-#define RAPID_FIRE_MAX_MS 145
+#define ALT_DELAY_MS 2000
+#define RAPID_FIRE_MIN_MS 120
+#define RAPID_FIRE_MAX_MS 130
 
 static bool ws_strafe_enabled = false;
 static bool ad_strafe_enabled = false;
